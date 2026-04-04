@@ -21,7 +21,46 @@ type ElectionStatus = {
   closedAt: string | null;
 };
 
+type MeResponse = {
+  id: number;
+  username: string;
+  role: string;
+};
+
+type Student = {
+  id: number;
+  dni: string;
+  fullName: string;
+  course: string;
+  enabled: boolean;
+};
+
+type StudentFormState = {
+  dni: string;
+  fullName: string;
+  course: string;
+  enabled: boolean;
+};
+
+const emptyStudentForm: StudentFormState = {
+  dni: '',
+  fullName: '',
+  course: '',
+  enabled: true,
+};
+
 export default function AdminPage() {
+  const API = 'http://localhost:3000';
+
+  const [token, setToken] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('123456');
+  const [me, setMe] = useState<MeResponse | null>(null);
+
   const [results, setResults] = useState<ResultItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [election, setElection] = useState<ElectionStatus | null>(null);
@@ -32,9 +71,22 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [lastUpdate, setLastUpdate] = useState('');
 
-  const API = 'http://localhost:3000';
+  const [students, setStudents] = useState<Student[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentsError, setStudentsError] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [hasSearchedStudents, setHasSearchedStudents] = useState(false);
+  const [studentForm, setStudentForm] =
+    useState<StudentFormState>(emptyStudentForm);
+  const [studentFormLoading, setStudentFormLoading] = useState(false);
+  const [editingStudentId, setEditingStudentId] = useState<number | null>(null);
 
-  const loadData = async () => {
+  const authHeaders = (jwt: string) => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${jwt}`,
+  });
+
+  const loadElectionData = async () => {
     setLoading(true);
     setError('');
 
@@ -68,8 +120,105 @@ export default function AdminPage() {
     }
   };
 
+  const loadStudents = async (
+    jwt: string,
+    search: string,
+    keepError = false,
+  ): Promise<void> => {
+    const term = search.trim();
+
+    if (!term) {
+      setStudents([]);
+      setHasSearchedStudents(false);
+      if (!keepError) {
+        setStudentsError('');
+      }
+      return;
+    }
+
+    setStudentsLoading(true);
+    setHasSearchedStudents(true);
+
+    if (!keepError) {
+      setStudentsError('');
+    }
+
+    try {
+      const query = `?search=${encodeURIComponent(term)}`;
+
+      const res = await fetch(`${API}/students${query}`, {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+        cache: 'no-store',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'No se pudieron cargar los alumnos');
+      }
+
+      setStudents(data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStudentsError(err.message);
+      } else {
+        setStudentsError('Ocurrió un error al cargar los alumnos');
+      }
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  const loadInitialAdminData = async () => {
+    await loadElectionData();
+    setStudents([]);
+    setHasSearchedStudents(false);
+    setStudentsError('');
+  };
+
+  const validateStoredToken = async (storedToken: string) => {
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error('Sesión inválida');
+      }
+
+      const data: MeResponse = await res.json();
+
+      if (data.role !== 'ADMIN') {
+        throw new Error('Acceso solo para administrador');
+      }
+
+      setToken(storedToken);
+      setMe(data);
+      setIsAuthenticated(true);
+      await loadInitialAdminData();
+    } catch {
+      localStorage.removeItem('admin_token');
+      setToken('');
+      setMe(null);
+      setIsAuthenticated(false);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   useEffect(() => {
-    loadData();
+    const storedToken = localStorage.getItem('admin_token');
+
+    if (!storedToken) {
+      setAuthLoading(false);
+      return;
+    }
+
+    validateStoredToken(storedToken);
   }, []);
 
   const normalizedResults = useMemo(() => {
@@ -90,11 +239,65 @@ export default function AdminPage() {
     }
 
     if (a.total === b.total) {
-      return 'Empate parcial';
+      return 'Empate';
     }
 
     return a.total > b.total ? 'Lista 10' : 'Lista 15';
   }, [normalizedResults]);
+
+  const handleLogin = async () => {
+    setLoginLoading(true);
+    setLoginError('');
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'No se pudo iniciar sesión');
+      }
+
+      localStorage.setItem('admin_token', data.access_token);
+      setToken(data.access_token);
+      setMe(data.user);
+      setIsAuthenticated(true);
+      await loadInitialAdminData();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setLoginError(err.message);
+      } else {
+        setLoginError('Error al iniciar sesión');
+      }
+    } finally {
+      setLoginLoading(false);
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    setToken('');
+    setMe(null);
+    setIsAuthenticated(false);
+    setResults([]);
+    setStats(null);
+    setElection(null);
+    setStudents([]);
+    setStudentSearch('');
+    setHasSearchedStudents(false);
+    setStudentForm(emptyStudentForm);
+    setEditingStudentId(null);
+    setError('');
+    setStudentsError('');
+    setLastUpdate('');
+  };
 
   const handleOpenVoting = async () => {
     const confirmed = window.confirm('¿Desea abrir la votación?');
@@ -106,13 +309,15 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/election/open`, {
         method: 'POST',
+        headers: authHeaders(token),
       });
 
       if (!res.ok) {
-        throw new Error('No se pudo abrir la votación');
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'No se pudo abrir la votación');
       }
 
-      await loadData();
+      await loadElectionData();
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -136,13 +341,15 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/election/close`, {
         method: 'POST',
+        headers: authHeaders(token),
       });
 
       if (!res.ok) {
-        throw new Error('No se pudo cerrar la votación');
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'No se pudo cerrar la votación');
       }
 
-      await loadData();
+      await loadElectionData();
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -166,13 +373,15 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/election/reset`, {
         method: 'POST',
+        headers: authHeaders(token),
       });
 
       if (!res.ok) {
-        throw new Error('No se pudo reiniciar la votación');
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'No se pudo reiniciar la votación');
       }
 
-      await loadData();
+      await loadElectionData();
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -184,7 +393,374 @@ export default function AdminPage() {
     }
   };
 
+  const handleStudentInputChange = (
+    field: keyof StudentFormState,
+    value: string | boolean,
+  ) => {
+    setStudentForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const resetStudentForm = () => {
+    setStudentForm(emptyStudentForm);
+    setEditingStudentId(null);
+    setStudentsError('');
+  };
+
+  const handleStudentSearch = async () => {
+    await loadStudents(token, studentSearch);
+  };
+
+  const handleStudentSearchReset = () => {
+    setStudentSearch('');
+    setStudents([]);
+    setHasSearchedStudents(false);
+    setStudentsError('');
+  };
+
+  const handleStudentSubmit = async () => {
+    setStudentFormLoading(true);
+    setStudentsError('');
+
+    try {
+      const payload = {
+        dni: studentForm.dni.trim(),
+        fullName: studentForm.fullName.trim(),
+        course: studentForm.course.trim(),
+        enabled: studentForm.enabled,
+      };
+
+      const endpoint =
+        editingStudentId === null
+          ? `${API}/students`
+          : `${API}/students/${editingStudentId}`;
+
+      const method = editingStudentId === null ? 'POST' : 'PATCH';
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: authHeaders(token),
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'No se pudo guardar el alumno');
+      }
+
+      resetStudentForm();
+      await loadElectionData();
+
+      if (studentSearch.trim()) {
+        await loadStudents(token, studentSearch, true);
+      } else {
+        setStudents([]);
+        setHasSearchedStudents(false);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStudentsError(err.message);
+      } else {
+        setStudentsError('Ocurrió un error al guardar el alumno');
+      }
+    } finally {
+      setStudentFormLoading(false);
+    }
+  };
+
+  const handleEditStudent = (student: Student) => {
+    setEditingStudentId(student.id);
+    setStudentForm({
+      dni: student.dni,
+      fullName: student.fullName,
+      course: student.course,
+      enabled: student.enabled,
+    });
+    setStudentsError('');
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
+  const handleToggleStudent = async (student: Student) => {
+    const confirmed = window.confirm(
+      student.enabled
+        ? '¿Desea deshabilitar este alumno?'
+        : '¿Desea habilitar este alumno?',
+    );
+
+    if (!confirmed) return;
+
+    setStudentsError('');
+
+    try {
+      const res = await fetch(`${API}/students/${student.id}/toggle-enabled`, {
+        method: 'PATCH',
+        headers: authHeaders(token),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'No se pudo actualizar el estado');
+      }
+
+      await loadElectionData();
+
+      if (studentSearch.trim()) {
+        await loadStudents(token, studentSearch, true);
+      } else {
+        setStudents([]);
+        setHasSearchedStudents(false);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStudentsError(err.message);
+      } else {
+        setStudentsError('Ocurrió un error al actualizar el estado');
+      }
+    }
+  };
+
+  const handleDeleteStudent = async (student: Student) => {
+    const confirmed = window.confirm(
+      `¿Desea eliminar al alumno ${student.fullName}?`,
+    );
+
+    if (!confirmed) return;
+
+    setStudentsError('');
+
+    try {
+      const res = await fetch(`${API}/students/${student.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'No se pudo eliminar el alumno');
+      }
+
+      if (editingStudentId === student.id) {
+        resetStudentForm();
+      }
+
+      await loadElectionData();
+
+      if (studentSearch.trim()) {
+        await loadStudents(token, studentSearch, true);
+      } else {
+        setStudents([]);
+        setHasSearchedStudents(false);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStudentsError(err.message);
+      } else {
+        setStudentsError('Ocurrió un error al eliminar el alumno');
+      }
+    }
+  };
+
   const isClosed = election ? !election.isOpen : false;
+
+  if (authLoading) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background:
+            'linear-gradient(180deg, #0d47a1 0%, #1565c0 18%, #eaf3ff 18%, #f7fbff 100%)',
+          fontFamily: 'Arial, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            background: '#fff',
+            padding: '28px 36px',
+            borderRadius: '18px',
+            fontWeight: 700,
+            color: '#0d47a1',
+            border: '3px solid #bbdefb',
+          }}
+        >
+          Verificando acceso...
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          background:
+            'linear-gradient(180deg, #0d47a1 0%, #1565c0 18%, #eaf3ff 18%, #f7fbff 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+          fontFamily: 'Arial, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '520px',
+            background: '#fff',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            border: '4px solid #bbdefb',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
+          }}
+        >
+          <header
+            style={{
+              background: 'linear-gradient(135deg, #0d47a1 0%, #1976d2 100%)',
+              color: 'white',
+              padding: '28px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '14px',
+              }}
+            >
+              <div
+                style={{
+                  background: '#fff',
+                  borderRadius: '14px',
+                  padding: '10px',
+                }}
+              >
+                <Image
+                  src="/logo-escuela.png"
+                  alt="Logo Escuela Técnica Valentín Virasoro"
+                  width={90}
+                  height={90}
+                  priority
+                />
+              </div>
+            </div>
+
+            <h1 style={{ margin: 0, fontSize: '2rem' }}>Login administrador</h1>
+            <p style={{ margin: '8px 0 0 0' }}>
+              Sistema de votación · ETVV
+            </p>
+          </header>
+
+          <section
+            style={{
+              padding: '32px 28px',
+              background: 'linear-gradient(180deg, #fafdff 0%, #eef6ff 100%)',
+            }}
+          >
+            <div style={{ marginBottom: '18px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#0d47a1',
+                  fontWeight: 700,
+                }}
+              >
+                Usuario
+              </label>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Usuario"
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  border: '2px solid #90caf9',
+                  fontSize: '1rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#0d47a1',
+                  fontWeight: 700,
+                }}
+              >
+                Contraseña
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Contraseña"
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  border: '2px solid #90caf9',
+                  fontSize: '1rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {loginError && (
+              <div
+                style={{
+                  marginBottom: '18px',
+                  background: '#fff3f3',
+                  border: '2px solid #ffcdd2',
+                  color: '#b71c1c',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  fontWeight: 700,
+                }}
+              >
+                {loginError}
+              </div>
+            )}
+
+            <button
+              onClick={handleLogin}
+              disabled={loginLoading || !username.trim() || !password.trim()}
+              style={{
+                width: '100%',
+                background: loginLoading ? '#90a4ae' : '#1565c0',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '15px 18px',
+                fontSize: '1rem',
+                fontWeight: 800,
+                cursor:
+                  loginLoading || !username.trim() || !password.trim()
+                    ? 'not-allowed'
+                    : 'pointer',
+              }}
+            >
+              {loginLoading ? 'Ingresando...' : 'Iniciar sesión'}
+            </button>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -198,7 +774,7 @@ export default function AdminPage() {
     >
       <div
         style={{
-          maxWidth: '1200px',
+          maxWidth: '1280px',
           margin: '0 auto',
           background: '#fff',
           borderRadius: '24px',
@@ -219,33 +795,61 @@ export default function AdminPage() {
               display: 'flex',
               gap: '18px',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
               flexWrap: 'wrap',
             }}
           >
             <div
               style={{
-                background: '#fff',
-                borderRadius: '14px',
-                padding: '8px',
+                display: 'flex',
+                gap: '18px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
               }}
             >
-              <Image
-                src="/logo-escuela.png"
-                alt="Logo Escuela Técnica Valentín Virasoro"
-                width={82}
-                height={82}
-                priority
-              />
+              <div
+                style={{
+                  background: '#fff',
+                  borderRadius: '14px',
+                  padding: '8px',
+                }}
+              >
+                <Image
+                  src="/logo-escuela.png"
+                  alt="Logo Escuela Técnica Valentín Virasoro"
+                  width={82}
+                  height={82}
+                  priority
+                />
+              </div>
+
+              <div style={{ textAlign: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: '2rem' }}>Mesa Electoral</h1>
+                <p style={{ margin: '8px 0 0 0', fontSize: '1.05rem' }}>
+                  Escuela Técnica Valentín Virasoro · Centro de Estudiantes
+                </p>
+              </div>
             </div>
 
-            <div style={{ textAlign: 'center' }}>
-              <h1 style={{ margin: 0, fontSize: '2rem' }}>
-                Mesa Electoral
-              </h1>
-              <p style={{ margin: '8px 0 0 0', fontSize: '1.05rem' }}>
-                Escuela Técnica Valentín Virasoro · Centro de Estudiantes
-              </p>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 800 }}>Usuario: {me?.username}</div>
+              <div style={{ marginTop: '6px' }}>Rol: {me?.role}</div>
+              <button
+                onClick={handleLogout}
+                style={{
+                  marginTop: '10px',
+                  background: '#ffffff',
+                  color: '#1565c0',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Cerrar sesión
+              </button>
             </div>
           </div>
         </header>
@@ -274,12 +878,24 @@ export default function AdminPage() {
                 Última actualización: {lastUpdate || '---'}
               </p>
               {election?.openedAt && (
-                <p style={{ margin: '8px 0 0 0', color: '#2e7d32', fontWeight: 700 }}>
+                <p
+                  style={{
+                    margin: '8px 0 0 0',
+                    color: '#2e7d32',
+                    fontWeight: 700,
+                  }}
+                >
                   Apertura: {new Date(election.openedAt).toLocaleString('es-AR')}
                 </p>
               )}
               {election?.closedAt && (
-                <p style={{ margin: '8px 0 0 0', color: '#c62828', fontWeight: 700 }}>
+                <p
+                  style={{
+                    margin: '8px 0 0 0',
+                    color: '#c62828',
+                    fontWeight: 700,
+                  }}
+                >
                   Cierre: {new Date(election.closedAt).toLocaleString('es-AR')}
                 </p>
               )}
@@ -298,6 +914,24 @@ export default function AdminPage() {
               {isClosed ? 'VOTACIÓN CERRADA' : 'VOTACIÓN ABIERTA'}
             </div>
           </div>
+
+          {!isClosed && (
+            <div
+              style={{
+                marginBottom: '18px',
+                background: '#fff8e1',
+                border: '2px solid #ffe082',
+                borderRadius: '14px',
+                padding: '14px',
+                color: '#6d4c41',
+                fontSize: '0.97rem',
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
+            >
+              Los resultados y el ganador se mostrarán una vez finalizada la votación.
+            </div>
+          )}
 
           {error && (
             <div
@@ -386,28 +1020,28 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                background: '#fff',
-                border: '2px solid #d7e8ff',
-                borderRadius: '18px',
-                padding: '20px',
-              }}
-            >
-              <div style={{ color: '#4a6482', fontWeight: 700 }}>
-                Ganador provisional
-              </div>
+            {isClosed && (
               <div
                 style={{
-                  marginTop: '8px',
-                  fontSize: '2rem',
-                  fontWeight: 900,
-                  color: '#0d47a1',
+                  background: '#fff',
+                  border: '2px solid #d7e8ff',
+                  borderRadius: '18px',
+                  padding: '20px',
                 }}
               >
-                {winnerText}
+                <div style={{ color: '#4a6482', fontWeight: 700 }}>Ganador</div>
+                <div
+                  style={{
+                    marginTop: '8px',
+                    fontSize: '2rem',
+                    fontWeight: 900,
+                    color: '#0d47a1',
+                  }}
+                >
+                  {winnerText}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div
@@ -415,6 +1049,7 @@ export default function AdminPage() {
               display: 'grid',
               gridTemplateColumns: '1.2fr 0.8fr',
               gap: '20px',
+              marginBottom: '24px',
             }}
           >
             <div
@@ -431,7 +1066,7 @@ export default function AdminPage() {
 
               {loading ? (
                 <p style={{ color: '#4a6482' }}>Cargando resultados...</p>
-              ) : (
+              ) : isClosed ? (
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {normalizedResults.map((item) => (
                     <div
@@ -488,6 +1123,20 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              ) : (
+                <div
+                  style={{
+                    padding: '20px',
+                    background: '#fff8e1',
+                    border: '2px solid #ffe082',
+                    borderRadius: '14px',
+                    color: '#6d4c41',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  Los resultados se mostrarán una vez finalizada la votación.
+                </div>
               )}
             </div>
 
@@ -505,7 +1154,7 @@ export default function AdminPage() {
 
               <div style={{ display: 'grid', gap: '14px' }}>
                 <button
-                  onClick={loadData}
+                  onClick={loadElectionData}
                   style={{
                     background: '#1565c0',
                     color: 'white',
@@ -524,14 +1173,18 @@ export default function AdminPage() {
                   onClick={handleOpenVoting}
                   disabled={!isClosed || actionLoading !== null}
                   style={{
-                    background: !isClosed || actionLoading !== null ? '#b0bec5' : '#2e7d32',
+                    background:
+                      !isClosed || actionLoading !== null ? '#b0bec5' : '#2e7d32',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
                     padding: '15px 18px',
                     fontSize: '1rem',
                     fontWeight: 800,
-                    cursor: !isClosed || actionLoading !== null ? 'not-allowed' : 'pointer',
+                    cursor:
+                      !isClosed || actionLoading !== null
+                        ? 'not-allowed'
+                        : 'pointer',
                   }}
                 >
                   {actionLoading === 'open' ? 'Abriendo...' : 'Abrir votación'}
@@ -541,14 +1194,18 @@ export default function AdminPage() {
                   onClick={handleCloseVoting}
                   disabled={isClosed || actionLoading !== null}
                   style={{
-                    background: isClosed || actionLoading !== null ? '#b0bec5' : '#c62828',
+                    background:
+                      isClosed || actionLoading !== null ? '#b0bec5' : '#c62828',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
                     padding: '15px 18px',
                     fontSize: '1rem',
                     fontWeight: 800,
-                    cursor: isClosed || actionLoading !== null ? 'not-allowed' : 'pointer',
+                    cursor:
+                      isClosed || actionLoading !== null
+                        ? 'not-allowed'
+                        : 'pointer',
                   }}
                 >
                   {actionLoading === 'close' ? 'Cerrando...' : 'Cerrar votación'}
@@ -568,7 +1225,9 @@ export default function AdminPage() {
                     cursor: actionLoading !== null ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {actionLoading === 'reset' ? 'Reiniciando...' : 'Reiniciar votación'}
+                  {actionLoading === 'reset'
+                    ? 'Reiniciando...'
+                    : 'Reiniciar votación'}
                 </button>
               </div>
 
@@ -584,7 +1243,409 @@ export default function AdminPage() {
                   lineHeight: 1.5,
                 }}
               >
-                <b>Reiniciar votación</b> elimina todos los votos registrados y vuelve a abrir la elección.
+                <b>Reiniciar votación</b> elimina todos los votos registrados y
+                vuelve a abrir la elección.
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.3fr 0.7fr',
+              gap: '20px',
+            }}
+          >
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #d7e8ff',
+                borderRadius: '18px',
+                padding: '24px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  marginBottom: '18px',
+                }}
+              >
+                <h3 style={{ margin: 0, color: '#0d47a1' }}>
+                  Gestión de alumnos
+                </h3>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <input
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Buscar por DNI, apellido, nombre o curso"
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '2px solid #90caf9',
+                      minWidth: '280px',
+                      outline: 'none',
+                    }}
+                  />
+
+                  <button
+                    onClick={handleStudentSearch}
+                    style={{
+                      background: '#1565c0',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Buscar
+                  </button>
+
+                  <button
+                    onClick={handleStudentSearchReset}
+                    style={{
+                      background: '#ffffff',
+                      color: '#1565c0',
+                      border: '2px solid #90caf9',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+
+              {studentsError && (
+                <div
+                  style={{
+                    marginBottom: '16px',
+                    background: '#fff3f3',
+                    border: '2px solid #ffcdd2',
+                    color: '#b71c1c',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {studentsError}
+                </div>
+              )}
+
+              {!hasSearchedStudents ? (
+                <div
+                  style={{
+                    padding: '20px',
+                    background: '#f4f9ff',
+                    border: '2px solid #bbdefb',
+                    borderRadius: '14px',
+                    color: '#0d47a1',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  Ingrese un apellido, nombre, curso o DNI para buscar alumnos.
+                </div>
+              ) : studentsLoading ? (
+                <p style={{ color: '#4a6482' }}>Buscando alumnos...</p>
+              ) : students.length === 0 ? (
+                <div
+                  style={{
+                    padding: '20px',
+                    background: '#fff8e1',
+                    border: '2px solid #ffe082',
+                    borderRadius: '14px',
+                    color: '#6d4c41',
+                    fontWeight: 700,
+                  }}
+                >
+                  No se encontraron alumnos para la búsqueda realizada.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {students.map((student) => (
+                    <div
+                      key={student.id}
+                      style={{
+                        background: student.enabled ? '#fafdff' : '#fff5f5',
+                        border: `2px solid ${
+                          student.enabled ? '#bbdefb' : '#ffcdd2'
+                        }`,
+                        borderRadius: '16px',
+                        padding: '16px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '14px',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: '1.2rem',
+                              fontWeight: 900,
+                              color: '#0d47a1',
+                            }}
+                          >
+                            {student.fullName}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '6px',
+                              color: '#4a6482',
+                              fontWeight: 700,
+                            }}
+                          >
+                            DNI: {student.dni} · Curso: {student.course}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '6px',
+                              fontWeight: 800,
+                              color: student.enabled ? '#2e7d32' : '#c62828',
+                            }}
+                          >
+                            {student.enabled ? 'HABILITADO' : 'DESHABILITADO'}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <button
+                            onClick={() => handleEditStudent(student)}
+                            style={{
+                              background: '#1565c0',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Modificar
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleStudent(student)}
+                            style={{
+                              background: student.enabled ? '#ef6c00' : '#2e7d32',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {student.enabled ? 'Deshabilitar' : 'Habilitar'}
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteStudent(student)}
+                            style={{
+                              background: '#c62828',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #d7e8ff',
+                borderRadius: '18px',
+                padding: '24px',
+              }}
+            >
+              <h3 style={{ marginTop: 0, color: '#0d47a1' }}>
+                {editingStudentId === null ? 'Agregar alumno' : 'Modificar alumno'}
+              </h3>
+
+              <div style={{ display: 'grid', gap: '14px' }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    DNI
+                  </label>
+                  <input
+                    value={studentForm.dni}
+                    onChange={(e) =>
+                      handleStudentInputChange('dni', e.target.value)
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '2px solid #90caf9',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Nombre completo
+                  </label>
+                  <input
+                    value={studentForm.fullName}
+                    onChange={(e) =>
+                      handleStudentInputChange('fullName', e.target.value)
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '2px solid #90caf9',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Curso
+                  </label>
+                  <input
+                    value={studentForm.course}
+                    onChange={(e) =>
+                      handleStudentInputChange('course', e.target.value)
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '2px solid #90caf9',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: '#0d47a1',
+                    fontWeight: 700,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={studentForm.enabled}
+                    onChange={(e) =>
+                      handleStudentInputChange('enabled', e.target.checked)
+                    }
+                  />
+                  Alumno habilitado para votar
+                </label>
+
+                <button
+                  onClick={handleStudentSubmit}
+                  disabled={
+                    studentFormLoading ||
+                    !studentForm.dni.trim() ||
+                    !studentForm.fullName.trim() ||
+                    !studentForm.course.trim()
+                  }
+                  style={{
+                    background: studentFormLoading ? '#b0bec5' : '#1565c0',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    fontWeight: 800,
+                    cursor:
+                      studentFormLoading ||
+                      !studentForm.dni.trim() ||
+                      !studentForm.fullName.trim() ||
+                      !studentForm.course.trim()
+                        ? 'not-allowed'
+                        : 'pointer',
+                  }}
+                >
+                  {studentFormLoading
+                    ? editingStudentId === null
+                      ? 'Agregando...'
+                      : 'Guardando cambios...'
+                    : editingStudentId === null
+                    ? 'Agregar alumno'
+                    : 'Guardar cambios'}
+                </button>
+
+                {editingStudentId !== null && (
+                  <button
+                    onClick={resetStudentForm}
+                    style={{
+                      background: '#ffffff',
+                      color: '#1565c0',
+                      border: '2px solid #90caf9',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancelar edición
+                  </button>
+                )}
               </div>
             </div>
           </div>
