@@ -418,10 +418,23 @@ export default function AdminPage() {
   };
 
   const handleResetVoting = async () => {
-    const confirmed = window.confirm(
-      '¿Desea reiniciar la votación? Esta acción eliminará todos los votos registrados y volverá a abrir la elección.',
+    const firstConfirmation = window.confirm(
+      '⚠️ ATENCIÓN: va a reiniciar la votación.\n\nEsta acción eliminará TODOS los votos registrados y volverá a abrir la elección.\n\nEsta operación no se puede deshacer.\n\n¿Desea continuar?',
     );
-    if (!confirmed) return;
+
+    if (!firstConfirmation) return;
+
+    const textConfirmation = window.prompt(
+      'Para confirmar el reinicio, escriba exactamente la palabra REINICIAR',
+      '',
+    );
+
+    if (textConfirmation !== 'REINICIAR') {
+      window.alert(
+        'Confirmación incorrecta. La votación no fue reiniciada.',
+      );
+      return;
+    }
 
     setActionLoading('reset');
     setError('');
@@ -438,6 +451,7 @@ export default function AdminPage() {
       }
 
       await loadElectionData();
+      window.alert('✅ La votación fue reiniciada correctamente.');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
