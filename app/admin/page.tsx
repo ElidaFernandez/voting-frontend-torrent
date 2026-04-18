@@ -88,6 +88,17 @@ export default function AdminPage() {
     Authorization: `Bearer ${jwt}`,
   });
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    borderRadius: '12px',
+    border: '2px solid #90caf9',
+    outline: 'none',
+    background: '#ffffff',
+    color: '#0d47a1',
+    fontSize: '1rem',
+  };
+
   const loadElectionData = async (jwt: string) => {
     setLoading(true);
     setError('');
@@ -655,18 +666,20 @@ export default function AdminPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(180deg, #000000 0%, #4a0000 100%)',
+          background:
+            'linear-gradient(180deg, #0d47a1 0%, #1565c0 18%, #eaf3ff 18%, #f7fbff 100%)',
           fontFamily: 'Arial, sans-serif',
+          colorScheme: 'light',
         }}
       >
         <div
           style={{
-            background: '#111',
+            background: '#fff',
             padding: '28px 36px',
             borderRadius: '18px',
             fontWeight: 700,
-            color: '#ffffff',
-            border: '3px solid #d32f2f',
+            color: '#0d47a1',
+            border: '3px solid #bbdefb',
           }}
         >
           Verificando acceso...
@@ -680,28 +693,30 @@ export default function AdminPage() {
       <main
         style={{
           minHeight: '100vh',
-          background: 'linear-gradient(180deg, #000000 0%, #4a0000 100%)',
+          background:
+            'linear-gradient(180deg, #0d47a1 0%, #1565c0 18%, #eaf3ff 18%, #f7fbff 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '24px',
           fontFamily: 'Arial, sans-serif',
+          colorScheme: 'light',
         }}
       >
         <div
           style={{
             width: '100%',
             maxWidth: '520px',
-            background: '#111',
+            background: '#fff',
             borderRadius: '24px',
             overflow: 'hidden',
-            border: '4px solid #d32f2f',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+            border: '4px solid #bbdefb',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
           }}
         >
           <header
             style={{
-              background: 'linear-gradient(135deg, #000000 0%, #b71c1c 100%)',
+              background: 'linear-gradient(135deg, #0d47a1 0%, #1976d2 100%)',
               color: 'white',
               padding: '28px 24px',
               textAlign: 'center',
@@ -740,7 +755,7 @@ export default function AdminPage() {
           <section
             style={{
               padding: '32px 28px',
-              background: '#1a1a1a',
+              background: 'linear-gradient(180deg, #fafdff 0%, #eef6ff 100%)',
             }}
           >
             <div style={{ marginBottom: '18px' }}>
@@ -748,7 +763,7 @@ export default function AdminPage() {
                 style={{
                   display: 'block',
                   marginBottom: '8px',
-                  color: '#ffffff',
+                  color: '#0d47a1',
                   fontWeight: 700,
                 }}
               >
@@ -758,16 +773,7 @@ export default function AdminPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Usuario"
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  borderRadius: '12px',
-                  border: '2px solid #d32f2f',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  background: '#111',
-                  color: '#fff',
-                }}
+                style={inputStyle}
               />
             </div>
 
@@ -776,7 +782,7 @@ export default function AdminPage() {
                 style={{
                   display: 'block',
                   marginBottom: '8px',
-                  color: '#ffffff',
+                  color: '#0d47a1',
                   fontWeight: 700,
                 }}
               >
@@ -787,16 +793,7 @@ export default function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Contraseña"
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  borderRadius: '12px',
-                  border: '2px solid #d32f2f',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  background: '#111',
-                  color: '#fff',
-                }}
+                style={inputStyle}
               />
             </div>
 
@@ -804,9 +801,9 @@ export default function AdminPage() {
               <div
                 style={{
                   marginBottom: '18px',
-                  background: '#330000',
-                  border: '2px solid #d32f2f',
-                  color: '#ffb3b3',
+                  background: '#fff3f3',
+                  border: '2px solid #ffcdd2',
+                  color: '#b71c1c',
                   borderRadius: '12px',
                   padding: '12px 14px',
                   fontWeight: 700,
@@ -821,10 +818,7 @@ export default function AdminPage() {
               disabled={loginLoading || !username.trim() || !password.trim()}
               style={{
                 width: '100%',
-                background:
-                  loginLoading || !username.trim() || !password.trim()
-                    ? '#666'
-                    : '#b71c1c',
+                background: loginLoading ? '#90a4ae' : '#1565c0',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '14px',
@@ -849,25 +843,27 @@ export default function AdminPage() {
     <main
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #000000 0%, #4a0000 100%)',
+        background:
+          'linear-gradient(180deg, #0d47a1 0%, #1565c0 18%, #eaf3ff 18%, #f7fbff 100%)',
         padding: '24px',
         fontFamily: 'Arial, sans-serif',
+        colorScheme: 'light',
       }}
     >
       <div
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          background: '#111',
+          background: '#fff',
           borderRadius: '24px',
           overflow: 'hidden',
-          border: '4px solid #d32f2f',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+          border: '4px solid #bbdefb',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
         }}
       >
         <header
           style={{
-            background: 'linear-gradient(135deg, #000000 0%, #b71c1c 100%)',
+            background: 'linear-gradient(135deg, #0d47a1 0%, #1976d2 100%)',
             color: 'white',
             padding: '24px',
           }}
@@ -922,7 +918,7 @@ export default function AdminPage() {
                 style={{
                   marginTop: '10px',
                   background: '#ffffff',
-                  color: '#b71c1c',
+                  color: '#1565c0',
                   border: 'none',
                   borderRadius: '12px',
                   padding: '10px 14px',
@@ -939,8 +935,8 @@ export default function AdminPage() {
         <section
           style={{
             padding: '28px',
-            background: '#1a1a1a',
-            color: '#fff',
+            background: 'linear-gradient(180deg, #fafdff 0%, #eef6ff 100%)',
+            color: '#0d47a1',
           }}
         >
           <div
@@ -954,17 +950,17 @@ export default function AdminPage() {
             }}
           >
             <div>
-              <h2 style={{ margin: 0, color: '#ffffff' }}>
+              <h2 style={{ margin: 0, color: '#0d47a1' }}>
                 Panel de control y estado
               </h2>
-              <p style={{ margin: '8px 0 0 0', color: '#cccccc' }}>
+              <p style={{ margin: '8px 0 0 0', color: '#4a6482' }}>
                 Última actualización: {lastUpdate || '---'}
               </p>
               {election?.openedAt && (
                 <p
                   style={{
                     margin: '8px 0 0 0',
-                    color: '#81c784',
+                    color: '#2e7d32',
                     fontWeight: 700,
                   }}
                 >
@@ -975,7 +971,7 @@ export default function AdminPage() {
                 <p
                   style={{
                     margin: '8px 0 0 0',
-                    color: '#ef5350',
+                    color: '#c62828',
                     fontWeight: 700,
                   }}
                 >
@@ -989,9 +985,9 @@ export default function AdminPage() {
                 padding: '10px 16px',
                 borderRadius: '999px',
                 fontWeight: 800,
-                background: isClosed ? '#330000' : '#1b5e20',
-                color: '#fff',
-                border: `2px solid ${isClosed ? '#ef5350' : '#81c784'}`,
+                background: isClosed ? '#ffebee' : '#e8f5e9',
+                color: isClosed ? '#c62828' : '#2e7d32',
+                border: `2px solid ${isClosed ? '#ef9a9a' : '#a5d6a7'}`,
               }}
             >
               {isClosed ? 'VOTACIÓN CERRADA' : 'VOTACIÓN ABIERTA'}
@@ -1002,11 +998,11 @@ export default function AdminPage() {
             <div
               style={{
                 marginBottom: '18px',
-                background: '#2a1a1a',
-                border: '2px solid #d32f2f',
+                background: '#fff8e1',
+                border: '2px solid #ffe082',
                 borderRadius: '14px',
                 padding: '14px',
-                color: '#ffd7d7',
+                color: '#6d4c41',
                 fontSize: '0.97rem',
                 fontWeight: 700,
                 textAlign: 'center',
@@ -1020,9 +1016,9 @@ export default function AdminPage() {
             <div
               style={{
                 marginBottom: '18px',
-                background: '#330000',
-                border: '2px solid #d32f2f',
-                color: '#ffb3b3',
+                background: '#fff3f3',
+                border: '2px solid #ffcdd2',
+                color: '#b71c1c',
                 borderRadius: '14px',
                 padding: '14px 16px',
                 fontWeight: 700,
@@ -1042,19 +1038,19 @@ export default function AdminPage() {
           >
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '20px',
               }}
             >
-              <div style={{ color: '#cccccc', fontWeight: 700 }}>Habilitados</div>
+              <div style={{ color: '#4a6482', fontWeight: 700 }}>Habilitados</div>
               <div
                 style={{
                   marginTop: '8px',
                   fontSize: '2.2rem',
                   fontWeight: 900,
-                  color: '#ffffff',
+                  color: '#0d47a1',
                 }}
               >
                 {stats?.totalStudents ?? 0}
@@ -1063,19 +1059,19 @@ export default function AdminPage() {
 
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '20px',
               }}
             >
-              <div style={{ color: '#cccccc', fontWeight: 700 }}>Votos emitidos</div>
+              <div style={{ color: '#4a6482', fontWeight: 700 }}>Votos emitidos</div>
               <div
                 style={{
                   marginTop: '8px',
                   fontSize: '2.2rem',
                   fontWeight: 900,
-                  color: '#ffffff',
+                  color: '#0d47a1',
                 }}
               >
                 {stats?.totalVotes ?? 0}
@@ -1084,19 +1080,19 @@ export default function AdminPage() {
 
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '20px',
               }}
             >
-              <div style={{ color: '#cccccc', fontWeight: 700 }}>Participación</div>
+              <div style={{ color: '#4a6482', fontWeight: 700 }}>Participación</div>
               <div
                 style={{
                   marginTop: '8px',
                   fontSize: '2.2rem',
                   fontWeight: 900,
-                  color: '#ffffff',
+                  color: '#0d47a1',
                 }}
               >
                 {stats?.participation ?? 0}%
@@ -1106,19 +1102,19 @@ export default function AdminPage() {
             {isClosed && (
               <div
                 style={{
-                  background: '#111',
-                  border: '2px solid #d32f2f',
+                  background: '#fff',
+                  border: '2px solid #d7e8ff',
                   borderRadius: '18px',
                   padding: '20px',
                 }}
               >
-                <div style={{ color: '#cccccc', fontWeight: 700 }}>Ganador</div>
+                <div style={{ color: '#4a6482', fontWeight: 700 }}>Ganador</div>
                 <div
                   style={{
                     marginTop: '8px',
                     fontSize: '1.3rem',
                     fontWeight: 900,
-                    color: '#ffffff',
+                    color: '#0d47a1',
                   }}
                 >
                   {winnerText}
@@ -1137,26 +1133,26 @@ export default function AdminPage() {
           >
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '24px',
               }}
             >
-              <h3 style={{ marginTop: 0, color: '#ffffff' }}>
+              <h3 style={{ marginTop: 0, color: '#0d47a1' }}>
                 Resultados por lista
               </h3>
 
               {loading ? (
-                <p style={{ color: '#cccccc' }}>Cargando resultados...</p>
+                <p style={{ color: '#4a6482' }}>Cargando resultados...</p>
               ) : isClosed ? (
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {normalizedResults.map((item) => (
                     <div
                       key={item.option}
                       style={{
-                        background: '#1c1c1c',
-                        border: '2px solid #d32f2f',
+                        background: '#f4f9ff',
+                        border: '2px solid #bbdefb',
                         borderRadius: '16px',
                         padding: '18px 20px',
                         display: 'flex',
@@ -1168,7 +1164,7 @@ export default function AdminPage() {
                       <div>
                         <div
                           style={{
-                            color: '#cccccc',
+                            color: '#4a6482',
                             fontSize: '0.95rem',
                             fontWeight: 700,
                           }}
@@ -1177,7 +1173,7 @@ export default function AdminPage() {
                         </div>
                         <div
                           style={{
-                            color: '#ffffff',
+                            color: '#0d47a1',
                             fontSize: '1.2rem',
                             fontWeight: 900,
                             marginTop: '4px',
@@ -1191,7 +1187,7 @@ export default function AdminPage() {
                         style={{
                           minWidth: '90px',
                           textAlign: 'center',
-                          background: '#b71c1c',
+                          background: '#1565c0',
                           color: '#fff',
                           borderRadius: '14px',
                           padding: '12px 16px',
@@ -1211,10 +1207,10 @@ export default function AdminPage() {
                 <div
                   style={{
                     padding: '20px',
-                    background: '#2a1a1a',
-                    border: '2px solid #d32f2f',
+                    background: '#fff8e1',
+                    border: '2px solid #ffe082',
                     borderRadius: '14px',
-                    color: '#ffd7d7',
+                    color: '#6d4c41',
                     fontWeight: 700,
                     textAlign: 'center',
                   }}
@@ -1226,13 +1222,13 @@ export default function AdminPage() {
 
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '24px',
               }}
             >
-              <h3 style={{ marginTop: 0, color: '#ffffff' }}>
+              <h3 style={{ marginTop: 0, color: '#0d47a1' }}>
                 Acciones de mesa
               </h3>
 
@@ -1240,7 +1236,7 @@ export default function AdminPage() {
                 <button
                   onClick={() => void loadElectionData(token)}
                   style={{
-                    background: '#b71c1c',
+                    background: '#1565c0',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
@@ -1258,9 +1254,9 @@ export default function AdminPage() {
                     onClick={() => void handleOpenActa()}
                     disabled={pdfLoading}
                     style={{
-                      background: pdfLoading ? '#666' : '#000000',
+                      background: pdfLoading ? '#b0bec5' : '#3949ab',
                       color: 'white',
-                      border: '2px solid #d32f2f',
+                      border: 'none',
                       borderRadius: '14px',
                       padding: '15px 18px',
                       fontSize: '1rem',
@@ -1277,7 +1273,7 @@ export default function AdminPage() {
                   disabled={!isClosed || actionLoading !== null}
                   style={{
                     background:
-                      !isClosed || actionLoading !== null ? '#666' : '#1b5e20',
+                      !isClosed || actionLoading !== null ? '#b0bec5' : '#2e7d32',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
@@ -1298,7 +1294,7 @@ export default function AdminPage() {
                   disabled={isClosed || actionLoading !== null}
                   style={{
                     background:
-                      isClosed || actionLoading !== null ? '#666' : '#c62828',
+                      isClosed || actionLoading !== null ? '#b0bec5' : '#c62828',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
@@ -1318,7 +1314,7 @@ export default function AdminPage() {
                   onClick={() => void handleResetVoting()}
                   disabled={actionLoading !== null}
                   style={{
-                    background: actionLoading !== null ? '#666' : '#ef6c00',
+                    background: actionLoading !== null ? '#b0bec5' : '#ef6c00',
                     color: 'white',
                     border: 'none',
                     borderRadius: '14px',
@@ -1337,11 +1333,11 @@ export default function AdminPage() {
               <div
                 style={{
                   marginTop: '18px',
-                  background: '#2a1a1a',
-                  border: '2px solid #d32f2f',
+                  background: '#fff8e1',
+                  border: '2px solid #ffe082',
                   borderRadius: '14px',
                   padding: '14px',
-                  color: '#ffd7d7',
+                  color: '#6d4c41',
                   fontSize: '0.97rem',
                   lineHeight: 1.5,
                 }}
@@ -1361,8 +1357,8 @@ export default function AdminPage() {
           >
             <div
               style={{
-                background: '#111',
-                border: '2px solid #d32f2f',
+                background: '#fff',
+                border: '2px solid #d7e8ff',
                 borderRadius: '18px',
                 padding: '24px',
               }}
@@ -1377,7 +1373,7 @@ export default function AdminPage() {
                   marginBottom: '18px',
                 }}
               >
-                <h3 style={{ margin: 0, color: '#ffffff' }}>
+                <h3 style={{ margin: 0, color: '#0d47a1' }}>
                   Gestión de alumnos
                 </h3>
 
@@ -1389,146 +1385,382 @@ export default function AdminPage() {
                   }}
                 >
                   <input
-  value={studentSearch}
-  onChange={(e) => setStudentSearch(e.target.value)}
-  placeholder="Buscar por DNI, apellido, nombre o curso"
-  style={{
-    padding: '12px 14px',
-    borderRadius: '12px',
-    border: '2px solid #d32f2f',
-    color: '#fff',
-    background: '#111',
-    width: '260px',
-  }}
-/>
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Buscar por DNI, apellido, nombre o curso"
+                    style={{
+                      ...inputStyle,
+                      minWidth: '280px',
+                      width: '280px',
+                    }}
+                  />
 
-<button
-  onClick={() => void handleStudentSearch()}
-  style={{
-    background: '#b71c1c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    fontWeight: 800,
-    cursor: 'pointer',
-  }}
->
-  Buscar
-</button>
+                  <button
+                    onClick={() => void handleStudentSearch()}
+                    style={{
+                      background: '#1565c0',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Buscar
+                  </button>
 
-<button
-  onClick={handleStudentSearchReset}
-  style={{
-    background: '#333',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    fontWeight: 800,
-    cursor: 'pointer',
-  }}
->
-  Limpiar
-</button>
-</div>
-</div>
+                  <button
+                    onClick={handleStudentSearchReset}
+                    style={{
+                      background: '#ffffff',
+                      color: '#1565c0',
+                      border: '2px solid #90caf9',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Limpiar
+                  </button>
+                </div>
+              </div>
 
-{studentsError && (
-  <p style={{ color: '#ff6b6b', marginBottom: 12 }}>
-    {studentsError}
-  </p>
-)}
+              {studentsError && (
+                <div
+                  style={{
+                    marginBottom: '16px',
+                    background: '#fff3f3',
+                    border: '2px solid #ffcdd2',
+                    color: '#b71c1c',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {studentsError}
+                </div>
+              )}
 
-{studentsLoading && <p>Cargando alumnos...</p>}
+              {!hasSearchedStudents ? (
+                <div
+                  style={{
+                    padding: '20px',
+                    background: '#f4f9ff',
+                    border: '2px solid #bbdefb',
+                    borderRadius: '14px',
+                    color: '#0d47a1',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  Ingrese un apellido, nombre, curso o DNI para buscar alumnos.
+                </div>
+              ) : studentsLoading ? (
+                <p style={{ color: '#4a6482' }}>Buscando alumnos...</p>
+              ) : students.length === 0 ? (
+                <div
+                  style={{
+                    padding: '20px',
+                    background: '#fff8e1',
+                    border: '2px solid #ffe082',
+                    borderRadius: '14px',
+                    color: '#6d4c41',
+                    fontWeight: 700,
+                  }}
+                >
+                  No se encontraron alumnos para la búsqueda realizada.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {students.map((student) => (
+                    <div
+                      key={student.id}
+                      style={{
+                        background: student.enabled ? '#fafdff' : '#fff5f5',
+                        border: `2px solid ${
+                          student.enabled ? '#bbdefb' : '#ffcdd2'
+                        }`,
+                        borderRadius: '16px',
+                        padding: '16px',
+                        color: '#0d47a1',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '14px',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: '1.2rem',
+                              fontWeight: 900,
+                              color: '#0d47a1',
+                            }}
+                          >
+                            {student.fullName}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '6px',
+                              color: '#4a6482',
+                              fontWeight: 700,
+                            }}
+                          >
+                            DNI: {student.dni} · Curso: {student.course}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '6px',
+                              fontWeight: 800,
+                              color: student.enabled ? '#2e7d32' : '#c62828',
+                            }}
+                          >
+                            {student.enabled ? 'HABILITADO' : 'DESHABILITADO'}
+                          </div>
+                        </div>
 
-{students.length > 0 && (
-  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-    <thead>
-      <tr style={{ background: '#222' }}>
-        <th>DNI</th>
-        <th>Nombre</th>
-        <th>Curso</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {students.map((s) => (
-        <tr key={s.id}>
-          <td>{s.dni}</td>
-          <td>{s.fullName}</td>
-          <td>{s.course}</td>
-          <td>{s.enabled ? 'Activo' : 'Inactivo'}</td>
-          <td>
-            <button onClick={() => handleEditStudent(s)}>Editar</button>
-            <button onClick={() => handleToggleStudent(s)}>Toggle</button>
-            <button onClick={() => handleDeleteStudent(s)}>Baja</button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-)}
-</div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            background: '#eef6ff',
+                            border: '2px solid #d7e8ff',
+                            borderRadius: '14px',
+                            padding: '10px',
+                            minWidth: '280px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '100%',
+                              fontWeight: 800,
+                              color: '#0d47a1',
+                              marginBottom: '4px',
+                            }}
+                          >
+                            Acciones
+                          </div>
 
-{/* FORMULARIO */}
+                          <button
+                            onClick={() => handleEditStudent(student)}
+                            style={{
+                              background: '#1565c0',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Modificar
+                          </button>
 
-<div
-  style={{
-    background: '#111',
-    border: '2px solid #d32f2f',
-    borderRadius: '18px',
-    padding: '24px',
-  }}
->
-  <h3>{editingStudentId ? 'Editar alumno' : 'Nuevo alumno'}</h3>
+                          <button
+                            onClick={() => void handleToggleStudent(student)}
+                            style={{
+                              background: student.enabled ? '#ef6c00' : '#2e7d32',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {student.enabled ? 'Deshabilitar' : 'Habilitar'}
+                          </button>
 
-  <input
-    placeholder="DNI"
-    value={studentForm.dni}
-    onChange={(e) => handleStudentInputChange('dni', e.target.value)}
-  />
+                          <button
+                            onClick={() => void handleDeleteStudent(student)}
+                            disabled={!student.enabled}
+                            style={{
+                              background: !student.enabled ? '#b0bec5' : '#c62828',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              fontWeight: 800,
+                              cursor: !student.enabled ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            Dar de baja
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-  <input
-    placeholder="Nombre"
-    value={studentForm.fullName}
-    onChange={(e) =>
-      handleStudentInputChange('fullName', e.target.value)
-    }
-  />
+            <div
+              style={{
+                background: '#fff',
+                border: '2px solid #d7e8ff',
+                borderRadius: '18px',
+                padding: '24px',
+              }}
+            >
+              <h3 style={{ marginTop: 0, color: '#0d47a1' }}>
+                {editingStudentId === null ? 'Agregar alumno' : 'Modificar alumno'}
+              </h3>
 
-  <input
-    placeholder="Curso"
-    value={studentForm.course}
-    onChange={(e) =>
-      handleStudentInputChange('course', e.target.value)
-    }
-  />
+              <div style={{ display: 'grid', gap: '14px' }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    DNI
+                  </label>
+                  <input
+                    value={studentForm.dni}
+                    onChange={(e) =>
+                      handleStudentInputChange('dni', e.target.value)
+                    }
+                    style={inputStyle}
+                  />
+                </div>
 
-  <button onClick={handleStudentSubmit}>
-    Guardar
-  </button>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Nombre completo
+                  </label>
+                  <input
+                    value={studentForm.fullName}
+                    onChange={(e) =>
+                      handleStudentInputChange('fullName', e.target.value)
+                    }
+                    style={inputStyle}
+                  />
+                </div>
 
-  {editingStudentId && (
-    <button onClick={resetStudentForm}>Cancelar</button>
-  )}
-</div>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      color: '#0d47a1',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Curso
+                  </label>
+                  <input
+                    value={studentForm.course}
+                    onChange={(e) =>
+                      handleStudentInputChange('course', e.target.value)
+                    }
+                    style={inputStyle}
+                  />
+                </div>
 
-</div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: '#0d47a1',
+                    fontWeight: 700,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={studentForm.enabled}
+                    onChange={(e) =>
+                      handleStudentInputChange('enabled', e.target.checked)
+                    }
+                  />
+                  Alumno habilitado para votar
+                </label>
 
-<footer
-  style={{
-    marginTop: 24,
-    textAlign: 'center',
-    color: '#ccc',
-  }}
->
-  {'Colegio Secundario "Dr. Juan Eusebio Torrent"'}
-</footer>
+                <button
+                  onClick={() => void handleStudentSubmit()}
+                  disabled={
+                    studentFormLoading ||
+                    !studentForm.dni.trim() ||
+                    !studentForm.fullName.trim() ||
+                    !studentForm.course.trim()
+                  }
+                  style={{
+                    background: studentFormLoading ? '#b0bec5' : '#1565c0',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    fontWeight: 800,
+                    cursor:
+                      studentFormLoading ||
+                      !studentForm.dni.trim() ||
+                      !studentForm.fullName.trim() ||
+                      !studentForm.course.trim()
+                        ? 'not-allowed'
+                        : 'pointer',
+                  }}
+                >
+                  {studentFormLoading
+                    ? editingStudentId === null
+                      ? 'Agregando...'
+                      : 'Guardando cambios...'
+                    : editingStudentId === null
+                    ? 'Agregar alumno'
+                    : 'Guardar cambios'}
+                </button>
 
-</section>
-</div>
-</main>
-);
+                {editingStudentId !== null && (
+                  <button
+                    onClick={resetStudentForm}
+                    style={{
+                      background: '#ffffff',
+                      color: '#1565c0',
+                      border: '2px solid #90caf9',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancelar edición
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <footer
+            style={{
+              marginTop: 24,
+              textAlign: 'center',
+              color: '#4a6482',
+              fontWeight: 700,
+            }}
+          >
+            {institutionConfig.schoolName}
+          </footer>
+        </section>
+      </div>
+    </main>
+  );
 }
