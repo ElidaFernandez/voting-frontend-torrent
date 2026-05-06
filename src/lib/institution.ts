@@ -10,7 +10,7 @@ export const institutionConfig = {
   footerAdmin: 'Colegio Secundario "Dr. Juan Eusebio Torrent" · Mesa electoral',
   voteOptions: [
     'Lista N°1 Ayelen Ponce (presidente)',
-    'Lista N°7 Facundo Molina (presidente)',
+    'Lista N°7 Paredes Priscila (presidente)',
     'Lista N°10 Carolina Grachot (presidente)',
   ] as const,
 };
